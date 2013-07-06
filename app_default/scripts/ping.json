@@ -1,17 +1,25 @@
 {
 "rules": [
 
-{ "about":"start",
+{ "about":"timer",
  "function":"timer",
- "data":{"value":1000},
- "to":"start/checked"
+ "data":{"value":100000},
+ "to":"start"
 },
 {
- "about":"start/checked",
+ "about":"start",
  "function":"execCommandStoreOut",
- "data":{"argument":["./scripts/ping/index.sh"]},
- "to":"start"
+ "data":{"argument":["/usr/bin/xinit", "/usr/lib/taboca/telasocial"]},
+ "to":"timer",
+ "error":"start2"
+},
+{
+ "about":"start2",
+ "function":"execCommandStoreOut",
+ "data":{"argument":["/usr/bin/xinit", "xcalc"]},
+ "to":"timer"
 }
+
 
 
 ]
