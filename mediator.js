@@ -153,7 +153,8 @@ function executeProcessRule(uuid) {
 
 	if(curr.script.function == "execCommandStoreOut") { 
 	    script = path.join(__dirname, 'action/execCommandPing.js');
-        var child1 = new (forever.Monitor)(script,  { max: 1, options: [ curr.script.data.argument, gLocalAppDir ]  });
+        //var child1 = new (forever.Monitor)(script,  { max: 1, options: [ curr.script.data.argument, gLocalAppDir ]  });
+        var child1 = new (forever.Monitor)(script,  { max: 1, options: [  curr.script.data.argument[0], curr.script.data.argument[1] ]});
         curr.processHandler = child1;
         child1.start();
 	    child1.on('exit', function () { flog(uuid, ' script exited...')} );
@@ -201,7 +202,6 @@ function store(str) {
 
 
 function execFlow(uuid, streamStdout) { 
-
   var list = stdout2json.get(streamStdout);
 
   for(var key in list.flow) { 
@@ -209,6 +209,16 @@ function execFlow(uuid, streamStdout) {
     var payload = list.flow[key];
 
     if(payload.result == 'note') { 
+
+
+ if (payload.data.indexOf('GLX') > -1) {
+	console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:  ' + streamStdout + ' bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
+ }
+
+
+
+
+
       flog(uuid, 'result=note;' + payload.data );
       //eventQueue[uuid] = null;
     } 
@@ -242,7 +252,7 @@ function execFlow(uuid, streamStdout) {
       flog(uuid, 'result=error;'+ payload.data +' and removing it from queue.. ' );
       var toEvent = null; 
       if(payload.type == 'offline') { 
-         if(typeof eventQueue[uuid].script.to != 'undefined') { 
+        if(typeof eventQueue[uuid].script.to != 'undefined') { 
             toEvent = eventQueue[uuid].script.to; 
          } 
       } 
@@ -272,9 +282,18 @@ function execFlow(uuid, streamStdout) {
       if(eventQueue[uuid]) { 
         flog(uuid,'execContext = ' + eventQueue[uuid].executionContext);
         if(eventQueue[uuid].executionContext==1) { 
-           eventQueue[uuid].processHandler.stop();
+	  myId = eventQueue[uuid];
+          setTimeout(function() { 
+            myId.processHandler.stop();
+	    if(typeof myId.script.error != 'undefined') { 
+              console.log('EEEEEEEEEERRRRRRRRROOOOOOOOO!!!!!!!!!!');
+              toEvent = myId.script.error; 
+              if(toEvent != null) { createEvent(toEvent); } 
+            }
+          }, 5000);
         } 
       }
+      
       eventQueue[uuid] = null;
       delete eventQueue[uuid];
       if(toEvent != null) { createEvent(toEvent); } 
@@ -327,7 +346,10 @@ function loadScript(filename, namespace) {
             if(typeof currScript.to != 'undefined') { 
                 currScript.to = namespace +"/"+ stateTo;
             } 
-               
+            if(typeof currScript.error != 'undefined') { 
+                currScript.error = namespace +"/"+ currScript.error; 
+            }  
+
             if(currScript.about == namespace + '/start') { 
                 var currentEvent = new eventRuleObject(); 
                 currentEvent.script = currScript;
