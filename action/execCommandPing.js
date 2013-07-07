@@ -11,40 +11,25 @@ var sys = require("sys"),
     out = require('../3rdparty/stdout-2-json/stdout-2-json');
  
 var timer = null; 
+var strOut = '';
 
 // Eventually we can use options (  spawn(arg1,[args]) )
 
-function execCommand(argument, appPath) {
-
-  console.log(argument);
-
-  a=argument.split(',');
-  var params = new Array(); 
-  for(var i=1;i<a.length;i++) { 
-	params.push(a[i]);
-  } 
-
-//  var filePath = pathFS.join( appPath, a[0]);
-//  var child = exec(filePath,params);
-
-  var filePath = pathFS.join( __dirname, '..', appPath, a[0]);
-  var child = exec(filePath,params);
+function execCommand(appPath, argument) {
+  var filePath = pathFS.join( appPath );
+  var child = exec(filePath + ' ' + argument);
 
   var outBuffer = '';
  
 child.stdout.on('data', function (data) {
+
+  if (data.indexOf('connectionFailure') > -1) {
+    console.log('DEU CONNECTION FAILUUUUUUUUUUURE!');
+    out.send({'result':'expired'}); 
+  }
+
   console.log('stdout : ' + data);
   strOut="<?xml version='1.0' ?><note>"+data+"</note>";
-
-
-  var filePath = pathFS.join( __dirname, '..', appPath, 'channel','ping.xml');
-//  var filePath = pathFS.join( appPath, 'channel', 'ping.xml');
-  fs.writeFile(filePath, strOut, 'binary', function(err){
-   if (err) { 
-     out.senderr({'result':'error', 'payload': err});
-     throw err; 
-   }   
-  });
 
 });
 
@@ -59,7 +44,6 @@ child.on('exit', function (code) {
 
 }
 
-out.send({'result':'note', 'data':'Will open + '+ process.argv[2] + ' in ' + process.argv[3] } );
 //timer = setTimeout(function () { out.send({'result':'expired'}) },15000); 
 execCommand(process.argv[2], process.argv[3]);
 
